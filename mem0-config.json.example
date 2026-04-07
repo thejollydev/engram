@@ -1,0 +1,29 @@
+{
+  "llm": {
+    "provider": "ollama",
+    "config": {
+      "model": "devstral:24b",
+      "ollama_base_url": "http://your-ollama-host:11434"
+    }
+  },
+  "embedder": {
+    "provider": "ollama",
+    "config": {
+      "model": "nomic-embed-text",
+      "ollama_base_url": "http://your-ollama-host:11434"
+    }
+  },
+  "vector_store": {
+    "config": {
+      "embedding_model_dims": 768
+    }
+  },
+  "graph_store": {
+    "provider": "neo4j",
+    "config": {
+      "url": "bolt://neo4j:7687",
+      "username": "neo4j",
+      "password": "changeme_strong_password"
+    }
+  }
+}
