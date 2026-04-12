@@ -24,3 +24,11 @@ Thumbs.db
 # Claude
 CLAUDE.md
 .claude/
+
+# Local AI / agent workspace files
+.codex
+.codex/
+.vault-staging/
+AGENTS.md
+AGENT.md
+GEMINI.md

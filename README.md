@@ -1,126 +1,53 @@
 # Engram
 
-Self-hosted AI memory stack for persistent, cross-tool memory. Built on [mem0](https://github.com/mem0ai/mem0) with pgvector for semantic search, Neo4j for graph memory, and an Obsidian vault sync daemon.
+Portable, local-first memory and context orchestration for AI tools.
 
-## What It Does
+Engram is designed for people who use more than one AI assistant and do not want to lose continuity every time they switch tools. It provides a shared memory and knowledge layer that can ingest documents, conversations, and user-managed knowledge packs, then expose the right context to any connected client through a stable API and MCP interface.
 
-Engram gives your AI tools (Claude Code, Gemini CLI, Codex CLI, OpenClaw, or anything with REST/MCP access) a shared, persistent memory layer. Notes you write in Obsidian are automatically ingested. Conversations and context accumulate across tools and sessions.
+## Product Direction
 
-**Components:**
+Engram is being built around four core promises:
 
-| Service | Role |
-|---------|------|
-| **mem0 API server** | Memory extraction, retrieval, and orchestration (REST API) |
-| **pgvector (PostgreSQL)** | Vector store for semantic similarity search |
-| **Neo4j + APOC** | Knowledge graph for entity relationships and context chains |
-| **vault-sync** | Watches an Obsidian vault (or any markdown directory) and ingests changes into mem0 |
+- Bring your context with you across AI tools.
+- Ingest your own knowledge and make it available everywhere.
+- Support multiple memory and retrieval strategies instead of locking users into one stack.
+- Keep deployment local-first and self-hostable while leaving room for hosted and managed offerings later.
 
-## Architecture
+## Core Capabilities
 
-```
-Your AI Tools (Claude Code, Gemini CLI, Codex, OpenClaw, etc.)
-        │
-        ├── REST API (:8000)
-        │   └── mem0 API server
-        │       ├── pgvector (PostgreSQL) — vector embeddings
-        │       └── Neo4j + APOC — knowledge graph
-        │
-        └── MCP (via mem0-mcp-selfhosted or similar adapter)
+- Shared cross-tool memory for clients such as Claude Code, Codex, Gemini CLI, OpenClaw, and future MCP-compatible tools
+- Watched-directory ingestion, with Obsidian as the flagship connector
+- Support for multiple memory planes: session, semantic, graph, document, and temporal
+- Knowledge packs for injecting curated documentation or domain-specific information into the system
+- Hybrid deterministic-first query routing across multiple retrieval providers
+- Early support for pluggable providers rather than hard-wiring the product to a single memory engine
 
-Obsidian Vault (or any markdown directory)
-        │
-        └── vault-sync daemon (watchdog) → mem0 API → stored as memories
-```
+## Public Docs
 
-## Quick Start
+- [Architecture Overview](docs/architecture.md)
+- [Core Concepts](docs/concepts.md)
+- [Provider Model](docs/providers.md)
+- [Public Roadmap](docs/roadmap.md)
 
-### Prerequisites
+Private product planning, enterprise-style architecture documents, and internal implementation notes are maintained outside the public repository.
 
-- Docker and Docker Compose
-- An Ollama instance (or OpenAI API key) for LLM + embeddings
+## Current State
 
-### 1. Clone and configure
+The repository currently contains an early scaffold:
 
-```bash
-git clone https://github.com/thejollydev/engram.git
-cd engram
-cp .env.example .env
-# Edit .env with your passwords and Ollama URL
-```
+- Docker Compose stack
+- custom mem0 image experiments
+- an initial vault sync prototype
 
-### 2. Start the stack
+The architecture is being redesigned so Engram owns the product contract, retrieval orchestration, memory lifecycle, temporal modeling, and provider/plugin system rather than acting as a thin wrapper around third-party tooling.
 
-```bash
-docker compose up -d
-```
+## Near-Term Goals
 
-### 3. Configure mem0 for your LLM provider
-
-After the stack is healthy, configure Ollama (or your preferred provider):
-
-```bash
-curl -s -X POST http://localhost:8000/configure \
-  -H "Content-Type: application/json" \
-  -d @mem0-config.json
-```
-
-See [`mem0-config.json.example`](mem0-config.json.example) for the full configuration template.
-
-### 4. Verify
-
-```bash
-# Check all services are healthy
-docker compose ps
-
-# Test the API
-curl -s http://localhost:8000/memories?user_id=default
-
-# Swagger docs
-open http://localhost:8000/docs
-```
-
-### 5. (Optional) Point vault-sync at your Obsidian vault
-
-Set `VAULT_PATH` in `.env` to your vault directory. The vault-sync daemon will do a bulk ingest on startup, then watch for changes.
-
-## Configuration
-
-All configuration is done through `.env` and the `POST /configure` endpoint. See:
-
-- [`.env.example`](.env.example) — environment variables for Docker Compose
-- [`mem0-config.json.example`](mem0-config.json.example) — mem0 runtime configuration (LLM, embedder, graph store)
-
-## MCP Integration
-
-The mem0 API server exposes a REST API only — it does not natively serve MCP. To connect MCP-compatible tools (Claude Code, Gemini CLI, etc.), use a community MCP adapter such as [`mem0-mcp-selfhosted`](https://github.com/elvismdev/mem0-mcp-selfhosted).
-
-## API Reference
-
-The mem0 API runs on port 8000. Key endpoints:
-
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/configure` | Set LLM, embedder, vector store, graph store config |
-| POST | `/memories` | Create memories |
-| GET | `/memories` | List memories (filter by `user_id`, `agent_id`) |
-| POST | `/search` | Semantic memory search |
-| DELETE | `/memories/{id}` | Delete a memory |
-| GET | `/docs` | Swagger/OpenAPI explorer |
-
-## Project Structure
-
-```
-engram/
-├── docker-compose.yml          # Full stack orchestration
-├── .env.example                # Environment variable template
-├── mem0-config.json.example    # mem0 runtime config template
-├── mem0-custom/
-│   └── Dockerfile              # Custom mem0 image with graph memory deps
-└── vault-sync/
-    ├── Dockerfile
-    ├── requirements.txt
-    └── sync.py                 # Obsidian vault watcher + mem0 ingestion
-```
+- Define the canonical Engram memory model
+- Build the multi-plane retrieval architecture
+- Ship a local-first API and MCP surface
+- Support Obsidian/filesystem ingestion, PDFs, and imported model memories
+- Add an early UI for browsing, editing, and managing memories and imports
 
 ## License
 
